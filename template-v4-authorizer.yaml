@@ -71,12 +71,13 @@ Resources:
             Method: delete
             RestApiId: !Ref RestAPI
 
-  # Para testar curl -H "Authorization: Basic <base64_encoded_username:password>" https://<api-id>.execute-api.<region>.amazonaws.com/Prod/users
   AuthorizerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: src/api/authorizer.lambda_handler
+      Handler: src/api/authorizer_func.lambda_handler
       Description: Handler for Lambda authorizer
+      Policies:
+        - AWSLambdaBasicExecutionRole
       Tags:
         Stack: !Sub "${AWS::StackName}"
 
@@ -92,9 +93,12 @@ Resources:
         DefaultAuthorizer: MyLambdaAuthorizer  # Define que o tipo de autenticação será CUSTOM
         Authorizers:
           MyLambdaAuthorizer:
+            FunctionPayloadType: REQUEST
             FunctionArn: !GetAtt AuthorizerFunction.Arn
             AuthorizerType: REQUEST
-            IdentitySource: 'method.request.header.Authorization'
+            Identity:
+                Headers:
+                    - Authorization
             AuthorizerResultTtlInSeconds: 300
 Outputs:
   UsersTable:
