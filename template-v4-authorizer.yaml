@@ -93,6 +93,7 @@ Resources:
         Authorizers:
           MyLambdaAuthorizer:
             FunctionArn: !GetAtt AuthorizerFunction.Arn
+            AuthorizerType: REQUEST
             IdentitySource: 'method.request.header.Authorization'
             AuthorizerResultTtlInSeconds: 300
 Outputs:
