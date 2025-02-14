@@ -1,0 +1,198 @@
+### Comandos a serm utilizados no workshop
+
+## Instalar o projeto inicial
+
+cd ~environment
+sam init --name "ws-serverless-patterns" --location "https://ws-assets-prod-iad-r-iad-ed304a55c2ca1aee.s3.us-east-1.amazonaws.com/76bc5278-3f38-46e8-b306-f0bfda551f5a/module2/sam-python/sam-cookiecutter-2023-11-03.zip"
+
+
+
+## Vá para o diretório do novo projeto e remova o arquivo samconfig.toml
+
+cd ws-serverless-patterns
+rm samconfig.toml
+
+
+## Vá para o diretório ./users
+
+cd ./users
+
+
+## Instale o tree
+
+sudo yum -y install tree
+
+tree
+
+
+### Crie um ambiente virtual para o Python
+
+pip freeze
+python -m venv venv
+source venv/bin/activate
+pip freeze
+
+
+### Construa o projeto do data store
+
+
+cd ~/environment/ws-serverless-patterns/users
+sam build
+
+
+### Faça o deploy do data store.
+
+sam deploy --guided --stack-name ws-serverless-patterns-users
+
+
+### Dependências requirements.txt
+datetime
+boto3
+python-jose
+
+
+### Construção e Implantação do template
+
+cd ~/environment/ws-serverless-patterns/users
+sam build && sam deploy
+
+
+### Invocando um evento localmente - teste POST
+
+sam local invoke -e events/event-post-user.json -n env.json
+
+
+### Verificando se o dado foi inserido no DynamoDB
+
+aws dynamodb get-item --table-name ws-serverless-patterns-users-Users --key '{"userid": {"S": "<userid-from-response>"}}' 
+
+
+### faça a construção e implantação
+
+sam build && sam deploy
+
+
+### Guarde o valor do endpoint
+
+export API_ENDPOINT=$(aws cloudformation describe-stacks --stack-name ws-serverless-patterns-users --output text --query 'Stacks[0].Outputs[?OutputKey==`APIEndpoint`].OutputValue')
+echo "API endpoint: $API_ENDPOINT"
+
+### Teste a API
+
+curl $API_ENDPOINT/users
+
+### faça a construção e implantação
+
+sam build && sam deploy
+
+
+### Verifique a segurança da API
+
+curl $API_ENDPOINT/users
+
+
+
+### Comando CognitoAuthCommand
+
+aws cognito-idp initiate-auth --auth-flow USER_PASSWORD_AUTH --client-id 463ocrp3gffc5rdkfam8gfn7aa --auth-parameters USERNAME=<username>,PASSWORD=<password> --query 'AuthenticationResult.IdToken' --output text     
+
+
+### Crie uma varíavel do ambiente do ID_TOKEN.
+
+export ID_TOKEN=$(<Cognito authentication command>)
+echo $ID_TOKEN
+
+
+### Teste a API com o ID_TOKEN
+
+curl $API_ENDPOINT/users -H "Authorization:$ID_TOKEN"
+
+
+### Teste com o ID_TOKEN e ID Principal
+
+curl $API_ENDPOINT/users/<sub-value> -H "Authorization:$ID_TOKEN"
+
+
+### Adiconar dados via API
+
+curl --location --request PUT "$API_ENDPOINT/users/<SUB-VALUE>" --data-raw '{"name": "My name is <TYPE YOUR NAME HERE>"}' --header "Authorization: $ID_TOKEN" --header "Content-Type: application/json"
+
+
+### Acessar todos os usuários
+
+curl $API_ENDPOINT/users -H "Authorization:$ID_TOKEN"
+
+
+### Testes Unitários - tests/requirements.txt
+
+datetime
+boto3
+python-jose
+pytest>=7
+moto==3.1.19
+pytest-freezegun
+requests
+
+
+### Instalar as dependências de testes Python
+
+cd ~/environment/ws-serverless-patterns/users
+pip install -r requirements.txt
+pip install -r ./tests/requirements.txt
+
+
+### Execute os testes unitários
+
+python -m pytest tests/unit -v
+
+
+
+### Execute os testes integrados
+
+export ENV_STACK_NAME=ws-serverless-patterns-users
+python -m pytest tests/integration -v
+
+
+
+### Observability
+
+sam build && sam deploy
+
+
+### Rode os testes de integrados
+
+python -m pytest tests/integration -v
+
+
+### Alarmes
+
+sam build && sam deploy
+
+
+### Force o throttling nas funções lambda
+
+
+aws lambda put-function-concurrency \
+    --function-name  ws-serverless-patterns-users-UsersFunction-wXE9kCxLYFVB  \
+    --reserved-concurrent-executions 0
+
+
+### Remover o limite do comando anterior
+
+aws lambda delete-function-concurrency --function-name ws-serverless-patterns-users-UsersFunction-wXE9kCxLYFVB
+
+
+### Verificar
+
+aws lambda get-function-concurrency --function-name ws-serverless-patterns-users-UsersFunction-wXE9kCxLYFVB
+
+
+
+### Clean up
+
+sam delete --stack-name ws-serverless-patterns-users
+
+
+
+
+
