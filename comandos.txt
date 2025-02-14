@@ -17,14 +17,6 @@ rm samconfig.toml
 
 cd ./users
 
-
-## Instale o tree
-
-sudo yum -y install tree
-
-tree
-
-
 ### Crie um ambiente virtual para o Python
 
 pip freeze
@@ -81,7 +73,9 @@ echo "API endpoint: $API_ENDPOINT"
 
 curl $API_ENDPOINT/users
 
-### faça a construção e implantação
+
+
+### faça a construção e implantação - Autenticação
 
 sam build && sam deploy
 
@@ -89,6 +83,8 @@ sam build && sam deploy
 ### Verifique a segurança da API
 
 curl $API_ENDPOINT/users
+
+curl -H "Authorization: Basic <base64_encoded_username:password>" $API_ENDPOINT/users
 
 
 
@@ -111,6 +107,10 @@ curl $API_ENDPOINT/users -H "Authorization:$ID_TOKEN"
 ### Teste com o ID_TOKEN e ID Principal
 
 curl $API_ENDPOINT/users/<sub-value> -H "Authorization:$ID_TOKEN"
+
+
+
+
 
 
 ### Adiconar dados via API
@@ -191,8 +191,3 @@ aws lambda get-function-concurrency --function-name ws-serverless-patterns-users
 ### Clean up
 
 sam delete --stack-name ws-serverless-patterns-users
-
-
-
-
-

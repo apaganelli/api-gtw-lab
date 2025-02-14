@@ -71,25 +71,6 @@ Resources:
             Method: delete
             RestApiId: !Ref RestAPI
 
-  RestAPI:
-    Type: AWS::Serverless::Api
-    Properties:
-      StageName: Prod
-      TracingEnabled: true
-      Tags:
-        Name: !Sub "${AWS::StackName}-API"
-        Stack: !Sub "${AWS::StackName}"      
-      Auth:
-        Authorizers:
-          LambdaAuthorizer:
-            FunctionArn: !GetAtt AuthorizerFunction.Arn
-            IdentitySource: 'method.request.header.Authorization'
-            AuthorizerResultTtlInSeconds: 300  # Cache do resultado do authorizer
-        MethodSettings:
-          - ResourcePath: '/*'
-            HttpMethod: '*'  # Aplica a autenticação a todos os métodos
-            AuthorizationType: CUSTOM
-
   # Para testar curl -H "Authorization: Basic <base64_encoded_username:password>" https://<api-id>.execute-api.<region>.amazonaws.com/Prod/users
   AuthorizerFunction:
     Type: AWS::Serverless::Function
@@ -99,6 +80,21 @@ Resources:
       Tags:
         Stack: !Sub "${AWS::StackName}"
 
+  RestAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      TracingEnabled: true
+      Tags:
+        Name: !Sub "${AWS::StackName}-API"
+        Stack: !Sub "${AWS::StackName}"
+      Auth:
+        DefaultAuthorizer: MyLambdaAuthorizer  # Define que o tipo de autenticação será CUSTOM
+        Authorizers:
+          MyLambdaAuthorizer:
+            FunctionArn: !GetAtt AuthorizerFunction.Arn
+            IdentitySource: 'method.request.header.Authorization'
+            AuthorizerResultTtlInSeconds: 300
 Outputs:
   UsersTable:
     Description: DynamoDB Users table

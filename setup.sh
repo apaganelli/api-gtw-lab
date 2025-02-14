@@ -9,17 +9,20 @@ bash resize.sh 20
 
 # Install Python 3.9
 cd ~/install
-wget 'https://www.python.org/ftp/python/3.9.10/Python-3.9.10.tgz'
-echo 'Extracting Python 3.9...'
-tar xvf Python-3.9.10.tgz > /dev/null 2>&1
-cd Python-*/
-./configure --enable-optimizations
-sudo make altinstall
-echo 'Python 3.9 installed!'
-
+#wget 'https://www.python.org/ftp/python/3.9.10/Python-3.9.10.tgz'
+#echo 'Extracting Python 3.9...'
+#tar xvf Python-3.9.10.tgz > /dev/null 2>&1
+#cd Python-*/
+#./configure --enable-optimizations
+#sudo make altinstall
 # Set Python 3.9 as the default
-alias python="python3.9"
-echo -e 'alias python="python3.9" ' >> ~/.bashrc 
+#alias python="python3.9"
+#echo -e 'alias python="python3.9" ' >> ~/.bashrc 
+
+sudo yum install -y python3 python3-pip
+alias python=python3
+echo -e 'alias python=python3' >> ~/.bashrc
+echo 'Python 3.9 installed!'
 
 # Upgrade to latest version of AWS SAM 
 cd ~/install
@@ -32,14 +35,6 @@ cd ~/install
 wget https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
 unzip awscli-exe-linux-x86_64.zip
 sudo ./aws/install --update
-
-# Upgrade to latest AWS CDK
-#cd ~/install
-#LATEST_CDK_URL=$(curl -s https://api.github.com/repos/aws/aws-cdk/releases/latest | grep -oP '"zipball_url": "\K[^"]+')
-#wget $LATEST_CDK_URL -O cdk-latest.zip
-#unzip cdk-latest.zip -d cdk-latest
-#sudo npm install -g ./cdk-latest/aws-aws-cdk-*/
-#unset LATEST_CDK_URL
 
 # Install Python libraries
 python3.9 -m pip install --upgrade pip
