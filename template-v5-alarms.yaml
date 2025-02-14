@@ -4,7 +4,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  SAM Template for Serverless Patterns v5 - JWT Authorizer
+  SAM Template for Serverless Patterns v7 - Observability - Alarms
 
 Globals:
   Function:
@@ -12,6 +12,12 @@ Globals:
     MemorySize: 128
     Timeout: 100
     Tracing: Active
+
+Parameters:
+  UserPoolAdminGroupName:
+    Description: User pool group name for API administrators 
+    Type: String
+    Default: apiAdmins
 
 Resources:
   UsersTable:
@@ -100,6 +106,61 @@ Resources:
                 Headers:
                     - Authorization
             AuthorizerResultTtlInSeconds: 300
+
+  AlarmsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Tags:
+        - Key: "Stack" 
+          Value: !Sub "${AWS::StackName}"
+
+  RestAPIErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - !Ref AlarmsTopic
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: ApiName
+          Value: !Ref RestAPI
+      EvaluationPeriods: 1
+      MetricName: 5XXError
+      Namespace: AWS/ApiGateway
+      Period: 60
+      Statistic: Sum
+      Threshold: 1.0
+
+  AuthorizerFunctionErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - !Ref AlarmsTopic
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref AuthorizerFunction
+      EvaluationPeriods: 1
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      Threshold: 1.0      
+
+  UsersFunctionErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - !Ref AlarmsTopic
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref UsersFunction
+      EvaluationPeriods: 1
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      Threshold: 1.0
 Outputs:
   UsersTable:
     Description: DynamoDB Users table
@@ -112,3 +173,7 @@ Outputs:
   APIEndpoint:
     Description: "API Gateway endpoint URL"
     Value: !Sub "https://${RestAPI}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+
+  AlarmsTopic:
+    Description: "SNS Topic to be used for the alarms subscriptions"
+    Value: !Ref AlarmsTopic

@@ -5,6 +5,8 @@ def lambda_handler(event, context):
     expected_username = "admin"
     expected_password = "password123"
 
+    print("event", event)
+
     # Obtém o header Authorization
     auth_header = event.get("headers", {}).get("Authorization", "")
     
